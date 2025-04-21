@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: default
+data:
+  filebeat.yml: |-
+    filebeat.inputs: []
+
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${NODE_NAME}
+          hints.enabled: false
+          templates:
+            - condition:
+                equals:
+                  kubernetes.labels.app: goiam
+              config:
+                - type: container
+                  paths:
+                    - /var/log/containers/goiam*.log
+                  symlinks: true
+                  scan_frequency: 10s
+                  close_inactive: 1m
+                  clean_removed: true
+                  processors:
+                    - decode_json_fields:
+                        fields: ["message"]
+                        target: ""
+                        overwrite_keys: true
+
+    output.logstash:
+      hosts: ["logstash-service:5044"]
+
+    logging.level: info
+    monitoring.enabled: false

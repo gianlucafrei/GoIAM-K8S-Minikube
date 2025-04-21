@@ -1,0 +1,22 @@
+apiVersion: v1
+data:
+  logstash.conf: |
+    input {
+      beats { port => 5044 }
+      tcp { port => 5050 codec => line }
+    }
+
+    filter {
+      json {
+        source => "message"
+      }
+    }
+
+    output {
+      elasticsearch { hosts => ["http://es-service:9200"] index => "logs-%{+YYYY.MM.dd}" }
+      stdout {}
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: log-manual-pipeline

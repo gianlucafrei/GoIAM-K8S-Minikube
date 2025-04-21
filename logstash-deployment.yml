@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash-logging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash-logging
+  template:
+    metadata:
+      labels:
+        app: logstash-logging
+    spec:
+      hostname: logstash-logging
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.18.0
+        ports:
+        - containerPort: 5044
+          name: beats
+        - containerPort: 9600
+          name: monitoring
+        env:
+        - name: LS_JAVA_OPTS
+          value: "-Xms512m -Xmx512m"  # optional, helps memory control
+        volumeMounts:
+        - name: logstash-pipeline
+          mountPath: /usr/share/logstash/pipeline/
+        command:
+        - logstash
+      volumes:
+      - name: logstash-pipeline
+        configMap:
+          name: log-manual-pipeline
+          items:
+          - key: logstash.conf
+            path: logstash.conf
